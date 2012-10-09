@@ -2035,5 +2035,10 @@ var setup_print_tweaks = function setup_print_tweaks() {
   window.onafterprint = afterPrint;
 };
 
+// Load options from server
+var load_config = function load_config() {
+  return $.get(base_app_url + 'conf');
+};
+
 
 // vim: sw=2 tabstop=2
