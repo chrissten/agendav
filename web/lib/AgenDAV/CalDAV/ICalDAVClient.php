@@ -128,5 +128,5 @@ interface ICalDAVClient
      * @param bool $use_or If set to true, combines previous conditions using an 'or' operand
      * @return Array Principals found for the given conditions
      */
-    public function principalSearch($dn, $user_address, $use_or);
+    public function principalSearch($dn, $user_address, $use_or = true);
 }
