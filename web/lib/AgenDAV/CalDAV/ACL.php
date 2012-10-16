@@ -21,15 +21,23 @@ namespace AgenDAV\CalDAV;
  *  along with AgenDAV.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-class ACL implements IACL;
+class ACL implements IACL
 {
     private $additional_principals;
 
     private $options;
 
+    private $namespaces;
+
+    public static $profiles = array('owner', 'authenticated', 'unauthenticated', 'share_read', 'share_rw');
+
     public function __construct($options = array())
     {
         $this->options = $options;
+        $this->namespaces = array(
+            '' => 'DAV:',
+            'C' => 'urn:ietf:params:xml:ns:caldav',
+        );
     }
 
     /**
@@ -55,9 +63,8 @@ class ACL implements IACL;
      */
     public function setOptions($permissions)
     {
-        $required = array('owner', 'authenticated', 'unauthenticated', 'share_read', 'share_rw');
         if (is_array($permissions)) {
-            foreach ($required as $k) {
+            foreach (self::$profiles as $k) {
                 if (!isset($permissions[$k])) {
                     throw new \InvalidArgumentException();
                 }
@@ -80,6 +87,10 @@ class ACL implements IACL;
      */
     public function addPrincipal($href, $perm)
     {
+        if ($perm != 'share_read' && $perm != 'share_rw') {
+            throw new \InvalidArgumentException();
+        }
+        $this->additional_principals[$href] = $perm;
     }
 
     /**
@@ -91,6 +102,12 @@ class ACL implements IACL;
      */
     public function removePrincipal($href)
     {
+        if (isset($this->additional_principals[$href])) {
+            unset($this->additional_principals[$href]);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -103,6 +120,7 @@ class ACL implements IACL;
      */
     public function parse($xmldoc)
     {
+        // TODO
     }
 
     /**
@@ -113,7 +131,58 @@ class ACL implements IACL;
      */
     public function getXML()
     {
-        $xml = <<<EOX;
-EOX;
+        $dom = new \DOMDocument('1.0', 'utf-8');
+        $dom->formatOutput = true;
+        $acl = $dom->createElement('acl');
+        foreach ($this->namespaces as $prefix => $ns) {
+            $acl->setAttribute('xmlns:' . $prefix, $ns);
+        }
+
+        // Add all ACEs
+        foreach (array('owner', 'authenticated', 'unauthenticated') as $special_profile) {
+            $acl->appendChild($this->generateACE($dom, $special_profile));
+        }
+        foreach ($this->additional_principals as $href => $profile) {
+            $acl->appendChild($this->generateACE($dom, $profile, $href));
+        }
+
+        $dom->appendChild($acl);
+        return $dom->saveXML();
+    }
+
+    private function generateACE(\DOMDocument $d, $type, $principal_href = '')
+    {
+        $ace = $d->createElement('ace');
+
+        // Affected principal
+        $principal = $d->createElement('principal');
+        $affected_principal = null;
+
+        if ($type == 'owner') {
+            $property = $d->createElement('property');
+            $owner = $d->createElement('owner');
+            $property->appendChild($owner);
+            $affected_principal = $property;
+        } elseif ($type == 'share_rw' || $type == 'share_read') {
+            $affected_principal = $d->createElement('href');
+            $affected_principal->appendChild($d->createTextNode($principal_href));
+        } else {
+            $affected_principal = $d->createElement($type);
+        }
+
+        $principal->appendChild($affected_principal);
+
+        $ace->appendChild($principal);
+
+        // Permissions
+        $grant = $d->createElement('grant');
+        foreach ($this->options[$type] as $permission) {
+            $privilege = $d->createElement('privilege');
+            $privilege->appendChild($d->createElement($permission));
+            $grant->appendChild($privilege);
+        }
+        $ace->appendChild($grant);
+
+        return $ace;
     }
 }
