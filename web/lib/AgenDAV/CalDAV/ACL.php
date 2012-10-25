@@ -29,10 +29,11 @@ class ACL implements IACL
 
     private $namespaces;
 
-    public static $profiles = array('owner', 'authenticated', 'unauthenticated', 'share_read', 'share_rw');
+    public static $profiles = array('owner', 'authenticated', 'unauthenticated');
 
     public function __construct($options = array())
     {
+        $this->additional_principals = array();
         $this->options = $options;
         $this->namespaces = array(
             '' => 'DAV:',
@@ -80,17 +81,17 @@ class ACL implements IACL
      * Adds an ACE for a principal 
      * 
      * @param string $href Principal href (relative URL)
-     * @param mixed $perm One of 'share_read' or 'share_rw', or an array of permissions
+     * @param Array $perms Array of permissions
      * @access public
      * @return void
      * @throws \InvalidArgumentException
      */
-    public function addPrincipal($href, $perm)
+    public function addPrincipal($href, $perms)
     {
-        if ($perm != 'share_read' && $perm != 'share_rw') {
+        if (!is_array($perms)) {
             throw new \InvalidArgumentException();
         }
-        $this->additional_principals[$href] = $perm;
+        $this->additional_principals[$href] = $perms;
     }
 
     /**
@@ -134,15 +135,16 @@ class ACL implements IACL
         $dom = new \DOMDocument('1.0', 'utf-8');
         $acl = $dom->createElement('acl');
         foreach ($this->namespaces as $prefix => $ns) {
-            $acl->setAttribute('xmlns:' . $prefix, $ns);
+            $prefix = (empty($prefix) ? $prefix : ':' . $prefix);
+            $acl->setAttribute('xmlns' . $prefix, $ns);
         }
 
         // Add all ACEs
         foreach (array('owner', 'authenticated', 'unauthenticated') as $special_profile) {
             $acl->appendChild($this->generateACE($dom, $special_profile));
         }
-        foreach ($this->additional_principals as $href => $profile) {
-            $acl->appendChild($this->generateACE($dom, $profile, $href));
+        foreach ($this->additional_principals as $href => $perms) {
+            $acl->appendChild($this->generateACE($dom, 'principal', $href, $perms));
         }
 
         $dom->appendChild($acl);
@@ -150,7 +152,17 @@ class ACL implements IACL
     }
 
 
-    public function generateACE(\DOMDocument $d, $type, $principal_href = '')
+    /**
+     * Generates an ACE element to be used inside an ACL element
+     * 
+     * @param \DOMDocument $d DOM Document to append the new <ace> element
+     * @param string $type Profile name (one of owner, authenticated, unauthenticated or principal)
+     * @param string $principal_href Principal to add
+     * @param Array $perms Permissions to add for given principal
+     * @access public
+     * @return void
+     */
+    public function generateACE(\DOMDocument $d, $type, $principal_href = '', $principal_perms = array())
     {
         $ace = $d->createElement('ace');
 
@@ -163,7 +175,7 @@ class ACL implements IACL
             $owner = $d->createElement('owner');
             $property->appendChild($owner);
             $affected_principal = $property;
-        } elseif ($type == 'share_rw' || $type == 'share_read') {
+        } elseif ($type == 'principal') {
             $affected_principal = $d->createElement('href');
             $affected_principal->appendChild($d->createTextNode($principal_href));
         } else {
@@ -176,7 +188,13 @@ class ACL implements IACL
 
         // Permissions
         $grant = $d->createElement('grant');
-        foreach ($this->options[$type] as $permission) {
+        if ($type != 'principal') {
+            $perms = $this->options[$type];
+        } else {
+            $perms = $principal_perms;
+        }
+
+        foreach ($perms as $permission) {
             $privilege = $d->createElement('privilege');
             $privilege->appendChild($d->createElement($permission));
             $grant->appendChild($privilege);
