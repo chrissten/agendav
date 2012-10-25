@@ -132,7 +132,6 @@ class ACL implements IACL
     public function getXML()
     {
         $dom = new \DOMDocument('1.0', 'utf-8');
-        $dom->formatOutput = true;
         $acl = $dom->createElement('acl');
         foreach ($this->namespaces as $prefix => $ns) {
             $acl->setAttribute('xmlns:' . $prefix, $ns);
@@ -150,7 +149,8 @@ class ACL implements IACL
         return $dom->saveXML();
     }
 
-    private function generateACE(\DOMDocument $d, $type, $principal_href = '')
+
+    public function generateACE(\DOMDocument $d, $type, $principal_href = '')
     {
         $ace = $d->createElement('ace');
 
