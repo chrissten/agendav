@@ -27,21 +27,19 @@ interface IACL
      * Gets default options for this ACL
      * 
      * @access public
-     * @return Array With the following keys: owner, authenticated, unauthenticated,
-     *               share_read, share_rw
+     * @return Array With the following keys: owner, authenticated, unauthenticated
      */
     public function getOptions();
 
     /**
      * Change permissions configuration 
      * 
-     * @param Array $permissions With the following keys: owner, authenticated, unauthenticated,
-     *               share_read, share_rw
+     * @param Array $options With the following keys: owner, authenticated, unauthenticated
      * @access public
      * @return void
      * @throws \InvalidArgumentException
      */
-    public function setOptions($permissions);
+    public function setOptions($options);
 
     /**
      * Adds an ACE for a principal 

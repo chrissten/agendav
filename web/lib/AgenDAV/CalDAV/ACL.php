@@ -23,18 +23,41 @@ namespace AgenDAV\CalDAV;
 
 class ACL implements IACL
 {
+    /**
+     * Principals which have been given additional permissions
+     *
+     * @var Array Associative array (principal href => array of permissions)
+     * @access private
+     */
     private $additional_principals;
 
+    /**
+     * Default options and permissions
+     *
+     * @var Array
+     * @access private
+     */
     private $options;
 
+    /**
+     * ACL namespaces
+     *
+     * @var Array (name => namespace)
+     * @access private
+     */
     private $namespaces;
 
+    /**
+     * Special user profile names
+     */
     public static $profiles = array('owner', 'authenticated', 'unauthenticated');
 
     public function __construct($options = array())
     {
         $this->additional_principals = array();
-        $this->options = $options;
+        if (!is_array($options) || count($options) > 0) {
+            $this->setOptions($options);
+        }
         $this->namespaces = array(
             '' => 'DAV:',
             'C' => 'urn:ietf:params:xml:ns:caldav',
@@ -62,16 +85,16 @@ class ACL implements IACL
      * @return void
      * @throws \InvalidArgumentException
      */
-    public function setOptions($permissions)
+    public function setOptions($options)
     {
-        if (is_array($permissions)) {
+        if (is_array($options)) {
             foreach (self::$profiles as $k) {
-                if (!isset($permissions[$k])) {
+                if (!isset($options[$k])) {
                     throw new \InvalidArgumentException();
                 }
             }
 
-            $this->options = $permissions;
+            $this->options = $options;
         } else {
             throw new \InvalidArgumentException();
         }
@@ -112,7 +135,7 @@ class ACL implements IACL
     }
 
     /**
-     * Parses an XML document containing an ACL 
+     * Parses an XML document containing an ACL
      * 
      * @param string $xmldoc 
      * @access public
