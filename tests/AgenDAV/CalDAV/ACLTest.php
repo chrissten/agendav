@@ -170,6 +170,55 @@ class ACLTest extends \PHPUnit_Framework_TestCase
         $this->checkXML($expected, $xml);
     }
 
+    public function testACLWithPrincipal()
+    {
+        // Values: array(occurrences, children)
+        // We are using now a default namespace, so we have to prefix each entry
+        $expected = array(
+            '/DAV:acl' => array(1, 4),
+            '/DAV:acl/DAV:ace' => array(4, null),
+            '/DAV:acl/DAV:ace[1]/DAV:principal' => array(1, 1),
+            '/DAV:acl/DAV:ace[1]/DAV:principal/DAV:property' => array(1, 1),
+            '/DAV:acl/DAV:ace[1]/DAV:principal/DAV:property/DAV:owner' => array(1, 0),
+            '/DAV:acl/DAV:ace[1]/DAV:grant' => array(1, 2),
+            '/DAV:acl/DAV:ace[1]/DAV:grant/DAV:privilege' => array(2, null),
+            '/DAV:acl/DAV:ace[1]/DAV:grant/DAV:privilege[1]' => array(1, 1),
+            '/DAV:acl/DAV:ace[1]/DAV:grant/DAV:privilege[1]/DAV:read' => array(1, 0),
+            '/DAV:acl/DAV:ace[1]/DAV:grant/DAV:privilege[2]' => array(1, 1),
+            '/DAV:acl/DAV:ace[1]/DAV:grant/DAV:privilege[2]/DAV:write' => array(1, 0),
+
+            '/DAV:acl/DAV:ace[2]/DAV:principal' => array(1, 1),
+            '/DAV:acl/DAV:ace[2]/DAV:principal/DAV:authenticated' => array(1, 0),
+            '/DAV:acl/DAV:ace[2]/DAV:grant' => array(1, 1),
+            '/DAV:acl/DAV:ace[2]/DAV:grant/DAV:privilege' => array(1, 1),
+            '/DAV:acl/DAV:ace[2]/DAV:grant/DAV:privilege[1]' => array(1, 1),
+            '/DAV:acl/DAV:ace[2]/DAV:grant/DAV:privilege[1]/DAV:read' => array(1, 0),
+
+            '/DAV:acl/DAV:ace[3]/DAV:principal' => array(1, 1),
+            '/DAV:acl/DAV:ace[3]/DAV:principal/DAV:unauthenticated' => array(1, 0),
+            '/DAV:acl/DAV:ace[3]/DAV:grant' => array(1, 1),
+            '/DAV:acl/DAV:ace[3]/DAV:grant/DAV:privilege' => array(1, 1),
+            '/DAV:acl/DAV:ace[3]/DAV:grant/DAV:privilege[1]' => array(1, 1),
+            '/DAV:acl/DAV:ace[3]/DAV:grant/DAV:privilege[1]/DAV:read' => array(1, 0),
+
+            '/DAV:acl/DAV:ace[4]/DAV:principal' => array(1, 1),
+            '/DAV:acl/DAV:ace[4]/DAV:principal/DAV:href' => array(1, 0),
+            '/DAV:acl/DAV:ace[4]/DAV:grant' => array(1, 2),
+            '/DAV:acl/DAV:ace[4]/DAV:grant/DAV:privilege' => array(2, null),
+            '/DAV:acl/DAV:ace[4]/DAV:grant/DAV:privilege[1]' => array(1, 1),
+            '/DAV:acl/DAV:ace[4]/DAV:grant/DAV:privilege[1]/DAV:read' => array(1, 0),
+            '/DAV:acl/DAV:ace[4]/DAV:grant/DAV:privilege[2]' => array(1, 1),
+            '/DAV:acl/DAV:ace[4]/DAV:grant/DAV:privilege[2]/DAV:write' => array(1, 0),
+        );
+        $acl = new ACL($this->options1);
+
+        $acl->addPrincipal('/test/principal', array('read', 'write'));
+
+        $xml = $acl->getXML();
+
+        $this->checkXML($expected, $xml);
+    }
+
     /**
      * Checks an XML against provided expected array
      *
