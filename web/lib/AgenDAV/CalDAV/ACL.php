@@ -50,7 +50,7 @@ class ACL implements IACL
     /**
      * Special user profile names
      */
-    public static $profiles = array('owner', 'authenticated', 'unauthenticated');
+    public static $profiles = array('owner', 'authenticated');
 
     public function __construct($options = array())
     {
@@ -68,7 +68,7 @@ class ACL implements IACL
      * Gets default options for this ACL
      * 
      * @access public
-     * @return Array With the following keys: owner, authenticated, unauthenticated,
+     * @return Array With the following keys: owner, authenticated, 
      *               share_read, share_rw
      */
     public function getOptions()
@@ -79,7 +79,7 @@ class ACL implements IACL
     /**
      * Change permissions configuration 
      * 
-     * @param Array $permissions With the following keys: owner, authenticated, unauthenticated,
+     * @param Array $permissions With the following keys: owner, authenticated
      *               share_read, share_rw
      * @access public
      * @return void
@@ -163,7 +163,7 @@ class ACL implements IACL
         }
 
         // Add all ACEs
-        foreach (array('owner', 'authenticated', 'unauthenticated') as $special_profile) {
+        foreach (array('owner', 'authenticated') as $special_profile) {
             $acl->appendChild($this->generateACE($dom, $special_profile));
         }
         foreach ($this->additional_principals as $href => $perms) {
@@ -179,7 +179,7 @@ class ACL implements IACL
      * Generates an ACE element to be used inside an ACL element
      * 
      * @param \DOMDocument $d DOM Document to append the new <ace> element
-     * @param string $type Profile name (one of owner, authenticated, unauthenticated or principal)
+     * @param string $type Profile name (one of owner, authenticated or principal)
      * @param string $principal_href Principal to add
      * @param Array $perms Permissions to add for given principal
      * @access public

@@ -27,14 +27,14 @@ interface IACL
      * Gets default options for this ACL
      * 
      * @access public
-     * @return Array With the following keys: owner, authenticated, unauthenticated
+     * @return Array With the following keys: owner, authenticated
      */
     public function getOptions();
 
     /**
      * Change permissions configuration 
      * 
-     * @param Array $options With the following keys: owner, authenticated, unauthenticated
+     * @param Array $options With the following keys: owner, authenticated
      * @access public
      * @return void
      * @throws \InvalidArgumentException

@@ -6,7 +6,6 @@ class ACLTest extends \PHPUnit_Framework_TestCase
     private $options1 = array(
         'owner' => array('read', 'write'),
         'authenticated' => array('read'),
-        'unauthenticated' => array('read'),
     );
 
     public function __construct()
@@ -82,30 +81,6 @@ class ACLTest extends \PHPUnit_Framework_TestCase
         $this->checkXML($expected, $xml);
     }
 
-    public function testACEUnauthenticated()
-    {
-        // Values: array(occurrences, children)
-        $expected = array(
-            '/ace' => array(1, 2),
-            '/ace/principal' => array(1, 1),
-            '/ace/principal/unauthenticated' => array(1, 0),
-            '/ace/grant' => array(1, 1),
-            '/ace/grant/privilege' => array(1, 1),
-            '/ace/grant/privilege[1]' => array(1, 1),
-            '/ace/grant/privilege[1]/read' => array(1, 0),
-        );
-        $acl = new ACL($this->options1);
-        $d = new \DOMDocument();
-
-        $ace1 = $acl->generateACE($d, 'unauthenticated');
-        $this->assertInstanceOf('\DOMElement', $ace1);
-        $d->appendChild($ace1);
-        $xml = $d->saveXML();
-
-        $this->checkXML($expected, $xml);
-    }
-
-
     public function testACEPrincipalGiven()
     {
         // Values: array(occurrences, children)
@@ -137,6 +112,37 @@ class ACLTest extends \PHPUnit_Framework_TestCase
         // Values: array(occurrences, children)
         // We are using now a default namespace, so we have to prefix each entry
         $expected = array(
+            '/DAV:acl' => array(1, 2),
+            '/DAV:acl/DAV:ace' => array(2, null),
+            '/DAV:acl/DAV:ace[1]/DAV:principal' => array(1, 1),
+            '/DAV:acl/DAV:ace[1]/DAV:principal/DAV:property' => array(1, 1),
+            '/DAV:acl/DAV:ace[1]/DAV:principal/DAV:property/DAV:owner' => array(1, 0),
+            '/DAV:acl/DAV:ace[1]/DAV:grant' => array(1, 2),
+            '/DAV:acl/DAV:ace[1]/DAV:grant/DAV:privilege' => array(2, null),
+            '/DAV:acl/DAV:ace[1]/DAV:grant/DAV:privilege[1]' => array(1, 1),
+            '/DAV:acl/DAV:ace[1]/DAV:grant/DAV:privilege[1]/DAV:read' => array(1, 0),
+            '/DAV:acl/DAV:ace[1]/DAV:grant/DAV:privilege[2]' => array(1, 1),
+            '/DAV:acl/DAV:ace[1]/DAV:grant/DAV:privilege[2]/DAV:write' => array(1, 0),
+
+            '/DAV:acl/DAV:ace[2]/DAV:principal' => array(1, 1),
+            '/DAV:acl/DAV:ace[2]/DAV:principal/DAV:authenticated' => array(1, 0),
+            '/DAV:acl/DAV:ace[2]/DAV:grant' => array(1, 1),
+            '/DAV:acl/DAV:ace[2]/DAV:grant/DAV:privilege' => array(1, 1),
+            '/DAV:acl/DAV:ace[2]/DAV:grant/DAV:privilege[1]' => array(1, 1),
+            '/DAV:acl/DAV:ace[2]/DAV:grant/DAV:privilege[1]/DAV:read' => array(1, 0),
+        );
+        $acl = new ACL($this->options1);
+
+        $xml = $acl->getXML();
+
+        $this->checkXML($expected, $xml);
+    }
+
+    public function testACLWithPrincipal()
+    {
+        // Values: array(occurrences, children)
+        // We are using now a default namespace, so we have to prefix each entry
+        $expected = array(
             '/DAV:acl' => array(1, 3),
             '/DAV:acl/DAV:ace' => array(3, null),
             '/DAV:acl/DAV:ace[1]/DAV:principal' => array(1, 1),
@@ -157,58 +163,13 @@ class ACLTest extends \PHPUnit_Framework_TestCase
             '/DAV:acl/DAV:ace[2]/DAV:grant/DAV:privilege[1]/DAV:read' => array(1, 0),
 
             '/DAV:acl/DAV:ace[3]/DAV:principal' => array(1, 1),
-            '/DAV:acl/DAV:ace[3]/DAV:principal/DAV:unauthenticated' => array(1, 0),
-            '/DAV:acl/DAV:ace[3]/DAV:grant' => array(1, 1),
-            '/DAV:acl/DAV:ace[3]/DAV:grant/DAV:privilege' => array(1, 1),
+            '/DAV:acl/DAV:ace[3]/DAV:principal/DAV:href' => array(1, 0),
+            '/DAV:acl/DAV:ace[3]/DAV:grant' => array(1, 2),
+            '/DAV:acl/DAV:ace[3]/DAV:grant/DAV:privilege' => array(2, null),
             '/DAV:acl/DAV:ace[3]/DAV:grant/DAV:privilege[1]' => array(1, 1),
             '/DAV:acl/DAV:ace[3]/DAV:grant/DAV:privilege[1]/DAV:read' => array(1, 0),
-        );
-        $acl = new ACL($this->options1);
-
-        $xml = $acl->getXML();
-
-        $this->checkXML($expected, $xml);
-    }
-
-    public function testACLWithPrincipal()
-    {
-        // Values: array(occurrences, children)
-        // We are using now a default namespace, so we have to prefix each entry
-        $expected = array(
-            '/DAV:acl' => array(1, 4),
-            '/DAV:acl/DAV:ace' => array(4, null),
-            '/DAV:acl/DAV:ace[1]/DAV:principal' => array(1, 1),
-            '/DAV:acl/DAV:ace[1]/DAV:principal/DAV:property' => array(1, 1),
-            '/DAV:acl/DAV:ace[1]/DAV:principal/DAV:property/DAV:owner' => array(1, 0),
-            '/DAV:acl/DAV:ace[1]/DAV:grant' => array(1, 2),
-            '/DAV:acl/DAV:ace[1]/DAV:grant/DAV:privilege' => array(2, null),
-            '/DAV:acl/DAV:ace[1]/DAV:grant/DAV:privilege[1]' => array(1, 1),
-            '/DAV:acl/DAV:ace[1]/DAV:grant/DAV:privilege[1]/DAV:read' => array(1, 0),
-            '/DAV:acl/DAV:ace[1]/DAV:grant/DAV:privilege[2]' => array(1, 1),
-            '/DAV:acl/DAV:ace[1]/DAV:grant/DAV:privilege[2]/DAV:write' => array(1, 0),
-
-            '/DAV:acl/DAV:ace[2]/DAV:principal' => array(1, 1),
-            '/DAV:acl/DAV:ace[2]/DAV:principal/DAV:authenticated' => array(1, 0),
-            '/DAV:acl/DAV:ace[2]/DAV:grant' => array(1, 1),
-            '/DAV:acl/DAV:ace[2]/DAV:grant/DAV:privilege' => array(1, 1),
-            '/DAV:acl/DAV:ace[2]/DAV:grant/DAV:privilege[1]' => array(1, 1),
-            '/DAV:acl/DAV:ace[2]/DAV:grant/DAV:privilege[1]/DAV:read' => array(1, 0),
-
-            '/DAV:acl/DAV:ace[3]/DAV:principal' => array(1, 1),
-            '/DAV:acl/DAV:ace[3]/DAV:principal/DAV:unauthenticated' => array(1, 0),
-            '/DAV:acl/DAV:ace[3]/DAV:grant' => array(1, 1),
-            '/DAV:acl/DAV:ace[3]/DAV:grant/DAV:privilege' => array(1, 1),
-            '/DAV:acl/DAV:ace[3]/DAV:grant/DAV:privilege[1]' => array(1, 1),
-            '/DAV:acl/DAV:ace[3]/DAV:grant/DAV:privilege[1]/DAV:read' => array(1, 0),
-
-            '/DAV:acl/DAV:ace[4]/DAV:principal' => array(1, 1),
-            '/DAV:acl/DAV:ace[4]/DAV:principal/DAV:href' => array(1, 0),
-            '/DAV:acl/DAV:ace[4]/DAV:grant' => array(1, 2),
-            '/DAV:acl/DAV:ace[4]/DAV:grant/DAV:privilege' => array(2, null),
-            '/DAV:acl/DAV:ace[4]/DAV:grant/DAV:privilege[1]' => array(1, 1),
-            '/DAV:acl/DAV:ace[4]/DAV:grant/DAV:privilege[1]/DAV:read' => array(1, 0),
-            '/DAV:acl/DAV:ace[4]/DAV:grant/DAV:privilege[2]' => array(1, 1),
-            '/DAV:acl/DAV:ace[4]/DAV:grant/DAV:privilege[2]/DAV:write' => array(1, 0),
+            '/DAV:acl/DAV:ace[3]/DAV:grant/DAV:privilege[2]' => array(1, 1),
+            '/DAV:acl/DAV:ace[3]/DAV:grant/DAV:privilege[2]/DAV:write' => array(1, 0),
         );
         $acl = new ACL($this->options1);
 
