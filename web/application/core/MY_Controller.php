@@ -114,6 +114,12 @@ class MY_Controller extends CI_Controller
 
             return $calendar_finder;
         });
+
+        // ACLs
+        $default_permissions = $this->config->item('acl_permissions');
+        $this->container['acl'] = function($container) use ($default_permissions) {
+            return new \AgenDAV\CalDAV\ACL($default_permissions);
+        };
     }
 }
 
