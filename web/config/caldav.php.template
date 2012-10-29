@@ -131,24 +131,11 @@ $config['enable_calendar_sharing'] = TRUE;
 $config['acl_permissions'] = array(
     'owner' => array(
         'all',
-        'read',
-        'unlock',
-        'read-acl',
-        'read-current-user-privilege-set',
-        'write-acl',
-        'C:read-free-busy',
-        'write',
-        'write-properties',
-        'write-content',
-        'bind',
-        'unbind'
     ),
 
     'authenticated' => array(
         'read-current-user-privilege-set',
         'C:read-free-busy'
-    ),
-    'unauthenticated' => array(
     ),
     'share_read' => array(
         'read-current-user-privilege-set',
