@@ -284,11 +284,20 @@ class Calendar extends MY_Controller
                 }
             }
 
-            $res = $this->client->setacl(
-                    $this->user->getUsername(),
-                    $this->user->getPasswd(),
-                    $internal_calendar,
-                    $set_shares);
+            // Generate ACL
+            $acl = $this->container['acl'];
+            $perms = $this->config->item('acl_permissions');
+            foreach ($set_shares as $add_share) {
+                $acl->addPrincipal(
+                    $this->urlgenerator->generatePrincipal($add_share['username']),
+                    $add_share['write_access'] ? $perms['share_rw'] : $perms['share_read']
+                );
+            }
+
+            $res = $this->client->setACL(
+                $calendar,
+                $acl->getXML()
+            );
 
             // Update shares on database
             if ($res === true) {
@@ -307,7 +316,7 @@ class Calendar extends MY_Controller
                     $this->shared_calendars->store(
                             $this_sid,
                             $this->user->getUsername(),
-                            $internal_calendar,
+                            $calendar,
                             $share['username'],
                             null,                   // Preserve options
                             $share['write_access']);
@@ -329,8 +338,18 @@ class Calendar extends MY_Controller
         if ($res === true) {
             $this->_throw_success();
         } else {
-            // There was an error
-            $this->_throw_exception($this->i18n->_('messages', $res[0], $res[1]));
+            $message = '';
+            $params = array();
+            switch ($res) {
+                case '403':
+                    $message = 'error_shareunknownusers';
+                    break;
+
+               default:
+                    $message = 'error_oops';
+                    break;
+            };
+            $this->_throw_exception($this->i18n->_('messages', $message, $params));
         }
     }
 
