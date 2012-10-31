@@ -31,6 +31,14 @@ class CalendarHomeSet implements IChannel
     private $client;
 
     /**
+     * Shared calendars model to access DB 
+     * 
+     * @var Object
+     * @access private
+     */
+    private $model;
+
+    /**
      * Instantiates a new CalendarHomeSet channel
      * 
      * @param \AgenDAV\CalDAV\ICalDAVClient $client 
@@ -39,6 +47,7 @@ class CalendarHomeSet implements IChannel
      */
     public function __construct(\AgenDAV\CalDAV\ICalDAVClient $client)
     {
+        $this->model = null;
         $this->client = $client;
     }
 
@@ -51,6 +60,9 @@ class CalendarHomeSet implements IChannel
      */
     public function configure($options)
     {
+        if (isset($options['model'])) {
+            $this->model = $options['model'];
+        }
     }
 
     /**
@@ -72,6 +84,13 @@ class CalendarHomeSet implements IChannel
      */
     public function getCalendars()
     {
-        return $this->client->getCalendars();
+        $calendars = $this->client->getCalendars();
+        if ($this->model !== null) {
+            foreach ($calendars as $c) {
+                $c->share_with = $this->model->usersWithAccessTo($c->calendar);
+            }
+        }
+
+        return $calendars;
     }
 }

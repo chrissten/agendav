@@ -102,15 +102,22 @@ class MY_Controller extends CI_Controller
 
         // Calendar finder
         $enable_calendar_sharing = $this->config->item('enable_calendar_sharing');
-        $this->container['calendarfinder'] = $this->container->share(function($container) use ($enable_calendar_sharing) {
+        $this->container['calendarfinder'] = $this->container->share(function($container) use ($enable_calendar_sharing, $ci_shared_calendars) {
             $calendar_finder = new \AgenDAV\CalendarFinder();
 
-            $calendar_finder->registerChannel($container['channels/calendarhomeset']);
+            $own_calendars = $container['channels/calendarhomeset'];
 
             // Sharing enabled?
             if ($enable_calendar_sharing === true) {
+                $own_calendars->configure(
+                    array(
+                        'model' => $ci_shared_calendars,
+                    )
+                );
                 $calendar_finder->registerChannel($container['channels/sharedcalendars']);
             }
+
+            $calendar_finder->registerChannel($own_calendars);
 
             return $calendar_finder;
         });
